@@ -31,5 +31,23 @@ def write():
 
     return jsonify({"message": "Successfully saved"}), 200
 
+
+@app.route("/word", methods=["GET"])
+def get_words():
+    entries_ref = db.collection("entries").order_by("timestamp", direction="DESCENDING")
+    docs = entries_ref.stream()
+
+    result = []
+    for doc in docs:
+        data = doc.to_dict()
+        # timestamp를 string으로 변환 
+        if "timestamp" in data:
+            data["timestamp"] = data["timestamp"].isoformat()
+        result.append(data)
+
+    return jsonify(result), 200
+
+
+
 if __name__ == "__main__":
     app.run(debug=True)
