@@ -32,18 +32,50 @@ def write():
     return jsonify({"message": "Successfully saved"}), 200
 
 
+from collections import defaultdict
+
 @app.route("/word", methods=["GET"])
 def get_words():
-    entries_ref = db.collection("entries").order_by("timestamp", direction="DESCENDING")
-    docs = entries_ref.stream()
+    docs = db.collection("entries").stream()
 
-    result = []
+    word_map = defaultdict(lambda: {
+        "weight": 0,
+        "color": "",
+        "latest_timestamp": None,
+        "first_timestamp": None
+    })
+
     for doc in docs:
         data = doc.to_dict()
-        # timestamp를 string으로 변환 
-        if "timestamp" in data:
-            data["timestamp"] = data["timestamp"].isoformat()
-        result.append(data)
+        item = data.get("item")
+        timestamp = data.get("timestamp")
+        color = data.get("color")
+
+        if item and timestamp:
+            if word_map[item]["weight"] == 0:
+                word_map[item]["first_timestamp"] = timestamp
+
+            word_map[item]["weight"] += 1
+            word_map[item]["latest_timestamp"] = timestamp
+            word_map[item]["color"] = color
+
+    # 정렬: 최신 등장 순 (latest_timestamp 기준 내림차순)
+    sorted_words = sorted(
+        word_map.items(),
+        key=lambda x: x[1]["latest_timestamp"],
+        reverse=True
+    )
+
+    # 상위 20개만 자르기
+    result = []
+    for item, meta in sorted_words[:20]:
+        result.append({
+            "item": item,
+            "weight": meta["weight"],
+            "color": meta["color"],
+            "latest_timestamp": meta["latest_timestamp"].isoformat(),
+            "first_timestamp": meta["first_timestamp"].isoformat()
+        })
 
     return jsonify(result), 200
 
