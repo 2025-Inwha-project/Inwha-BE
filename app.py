@@ -6,12 +6,7 @@ from firebase_config import db
 from datetime import datetime, timezone
 
 app = Flask(__name__)
-CORS(app, origins=[
-    "http://localhost:3000",
-    "https://localhost:3000",
-    "http://localhost:3005",
-    "https://localhost:3005"
-])
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 @app.route("/write", methods=["POST"])
 def write():
