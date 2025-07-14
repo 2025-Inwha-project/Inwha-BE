@@ -42,7 +42,8 @@ def get_words():
         "weight": 0,
         "color": "",
         "latest_timestamp": None,
-        "first_timestamp": None
+        "first_timestamp": None,
+        "author": None  
     })
 
     for doc in docs:
@@ -50,29 +51,30 @@ def get_words():
         item = data.get("item")
         timestamp = data.get("timestamp")
         color = data.get("color")
+        author = data.get("author")  
 
         if item and timestamp:
             if word_map[item]["weight"] == 0:
                 word_map[item]["first_timestamp"] = timestamp
+                word_map[item]["author"] = author  
 
             word_map[item]["weight"] += 1
             word_map[item]["latest_timestamp"] = timestamp
             word_map[item]["color"] = color
 
-    # 정렬: 최신 등장 순 (latest_timestamp 기준 내림차순)
     sorted_words = sorted(
         word_map.items(),
         key=lambda x: x[1]["latest_timestamp"],
         reverse=True
     )
 
-    # 상위 20개만 자르기
     result = []
     for item, meta in sorted_words[:20]:
         result.append({
             "item": item,
             "weight": meta["weight"],
             "color": meta["color"],
+            "author": meta["author"],  # 응답에 포함
             "latest_timestamp": meta["latest_timestamp"].isoformat(),
             "first_timestamp": meta["first_timestamp"].isoformat()
         })
